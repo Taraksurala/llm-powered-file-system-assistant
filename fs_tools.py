@@ -80,11 +80,11 @@ def read_file(filepath: str) -> dict:
 
 # Function to list all files in a directory and check if they exist and if the format is supported
 
-def list_files(directory: str, extension: str = None) -> dict:
+def list_files(filepath: str, extension: str = None) -> dict:
     # convert string to path
-    path = Path(directory)
+    path = Path(filepath)
 
-
+    # print(f"Path input for the list files function {path}" )
     # set flag for enabling filter as per the extension
     filter_enable = False
 
@@ -133,10 +133,10 @@ def list_files(directory: str, extension: str = None) -> dict:
      return {"success":False, "message": "Directory is invalid or does not exists" } 
 
 
-def write_file(directory: str, content: str) -> dict:
+def write_file(filepath: str, content: str) -> dict:
 
     # convert the string to path
-    path = Path(directory)
+    path = Path(filepath)
 
     path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -147,16 +147,61 @@ def write_file(directory: str, content: str) -> dict:
     except Exception as e:
         return {"success": False, "message": f"Error writing file at {str(e)}"}
 
+def search_in_file(filepath: str, keyword: str) -> dict:
+    # search_string validation
+
+    if not keyword.strip():
+        return {"message":"Search keyword cannot be empty","success": False}
+    else:
+
+        # read file content
+        result = read_file(filepath)
+
+        if result["success"]:
+            content = result["content"]
+
+            content_lower = content.lower()
+            keyword_lower = keyword.lower()
+
+            match_list = []
+            start_index = 0
+            while True:
+                index = content_lower.find(keyword_lower, start_index)
+                if index == -1:
+                    break
+                # print(f"Found '{search_string}' at index: {index}")
+                match_data = {
+                    "position" : index,
+                    "keyword": keyword,
+                    "context": content[max(0, index-30):min(len(content), index+len(keyword)+30)]
+                }
+                match_list.append(match_data)
+                start_index = index + len(keyword_lower)
+
+            if not match_list:
+                return {"success": True, "keyword": keyword, "metadata": result["metadata"], "message":"No matches found", "matches":match_list, "match_count": 0}
+            else:
+                return {"success": True, "keyword": keyword,  "metadata": result["metadata"], "matches":match_list, "match_count": len(match_list)}
+        else:
+            return result
     
 
-# print(read_file("sample.txt"))
-# print(read_file("resumes/"))
-# print(read_file("sampledoc.docx"))
 
-# print(list_files("resumes/",'.jpg'))
+if __name__ == "__main__":
+    # print(read_file("sample.txt"))
+    # print(read_file("resumes/"))
+    # print(read_file("sampledoc.docx"))
 
-# print(list_files("resumes/"))
-# print(list_files("resumes/", ".pdf"))
-# print(list_files("resumes/", "PDF"))
-# print(list_files("resumes/", ".jpg"))
-# print(list_files("does_not_exist/"))
+    # print(list_files("resumes/",'.jpg'))
+
+    # print(list_files("resumes/"))
+    # print(list_files("resumes/", ".pdf"))
+    # print(list_files("resumes/", "PDF"))
+    # print(list_files("resumes/", ".jpg"))
+    # print(list_files("does_not_exist/"))
+    # write_file(
+    #     "output/sample.txt",
+    #     "Hello from my file system assistant!"
+    # )
+
+    print(search_in_file("resumes/resume_tarak_full_stack_5_years_plus.pdf", "express"))
